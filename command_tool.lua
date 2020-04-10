@@ -13,7 +13,7 @@ local function select_soldier(soldier, player)
         -- ent._selected = true
         -- table.insert(selections, selection_obj)
 
-        if not input.sneak then
+        if not input.aux1 then
             for _, sel_obj in ipairs(selections) do
                 local parent = sel_obj:get_attach():get_luaentity()
                 parent._selected = false
@@ -35,7 +35,7 @@ local function select_soldier(soldier, player)
         end
 
     else
-        if not input.sneak then
+        if not input.aux1 then
             for _, sel_obj in ipairs(selections) do
                 local parent = sel_obj:get_attach():get_luaentity()
                 parent._selected = false
@@ -74,6 +74,8 @@ local function command_tool_on_use(itemstack, player, pointed_thing)
             if sel_obj ~= nil and sel_obj:get_attach() ~= nil then
                 local parent = sel_obj:get_attach():get_luaentity()
                 parent._targetPos = pos
+                --parent._targetObj =
+                --parent._targetOffset =
                 mobkit.clear_queue_high(parent)
             end
         end

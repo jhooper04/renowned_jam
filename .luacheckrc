@@ -1,10 +1,10 @@
 ignore = {"212"}
 globals = {
     "renowned_jam",
-    "mobkit",
-    "wieldview",
 }
 read_globals = {
+    "mobkit",
+    "wieldview",
 	"DIR_DELIM",
 	"minetest", "core",
 	"dump", "dump2",
