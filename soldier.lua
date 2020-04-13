@@ -19,25 +19,11 @@ local function lava_dmg(self,dmg)
 	end
 end
 
-local function hq_moveto(self,prty,tpos)
-	local func = function(theself)
-		if mobkit.is_queue_empty_low(theself) and theself.isonground then
-			local pos = mobkit.get_stand_pos(theself)
-			if vector.distance(pos,tpos) > 3 then
-				mobkit.goto_next_waypoint(theself,tpos)
-			else
-				mobkit.lq_idle(theself,1)
-			end
-		end
-	end
-	mobkit.queue_high(self,func,prty)
-end
-
 local function soldier_brain(self)
 	-- vitals should be checked every step
 	if mobkit.timer(self,1) then lava_dmg(self,6) end
 	mobkit.vitals(self)
---	if self.object:get_hp() <=100 then
+
 	if self.hp <= 0 then
 		mobkit.clear_queue_high(self)									-- cease all activity
 		mobkit.hq_die(self)												-- kick the bucket
@@ -50,7 +36,9 @@ local function soldier_brain(self)
 		if prty < 20 and self.isinliquid then
 			mobkit.hq_liquid_recovery(self,20)
 			return
-		end
+        end
+
+        renowned_jam.make_formation_step(self, prty)
 
 		--local pos=self.object:get_pos()
 
@@ -62,9 +50,23 @@ local function soldier_brain(self)
 		-- 	end
 		-- end
 
-        if prty < 9 and self._targetPos ~= nil then
+        -- if self._leader then
+        --     if prty < 9 and self._targetPos ~= nil then
+        --         hq_moveto(self, 9, self._targetPos)
+        --     end
+        -- else
+        --     if self._leading_obj ~= nil then
+        --         mobkit.clear_queue_high(self)
+        --         --print(dump(self._leading_obj:get_pos()))
+        --         hq_moveto(self, 9, self._leading_obj:get_pos())
+        --     else
+        --         if prty < 9 and self._targetPos ~= nil then
+        --             hq_moveto(self, 9, self._targetPos)
+        --         end
+        --     end
+        -- end
 
-            hq_moveto(self, 9, self._targetPos)
+
 			-- local plyr = mobkit.get_nearby_player(self)
 			-- if plyr and vector.distance(pos,plyr:get_pos()) < 10 then	-- if player close
             --     --mobkit.hq_warn(self,9,plyr)								-- try to repel them
@@ -73,8 +75,6 @@ local function soldier_brain(self)
             --     mobkit.hq_follow(self, 9, plyr)
             --     --print(dump(plyr:get_properties()))
 			-- end															-- hq_warn will trigger subsequent bhaviors if needed
-		end
-
 		-- fool around
 		--if mobkit.is_queue_empty_high(self) then
             --mobkit.hq_roam(self,0)
@@ -175,10 +175,10 @@ minetest.register_entity("renowned_jam:soldier", {
     max_speed = 5,
     jump_height = 1.26,
     view_range = 24,
-    lung_capacity = 10, 		-- seconds
-    max_hp = 14,
+    lung_capacity = 20, 		-- seconds
+    max_hp = 20,
     timeout=600,
-    attack={ range=0.5, damage_groups={fleshy=7}},
+    attack={ range=1, damage_groups={fleshy=6}},
     sounds = {
         attack='renowned_jam_man_fight',
         warn = 'renowned_jam_man_yell',

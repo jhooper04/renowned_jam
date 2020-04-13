@@ -70,15 +70,8 @@ local function command_tool_on_use(itemstack, player, pointed_thing)
         end
         flag_obj = minetest.add_entity(pos,"renowned_jam:command_flag")
 
-        for _, sel_obj in ipairs(selections) do
-            if sel_obj ~= nil and sel_obj:get_attach() ~= nil then
-                local parent = sel_obj:get_attach():get_luaentity()
-                parent._targetPos = pos
-                --parent._targetObj =
-                --parent._targetOffset =
-                mobkit.clear_queue_high(parent)
-            end
-        end
+        --
+        renowned_jam.make_formation_to_pos(selections, pos)
     end
 end
 
