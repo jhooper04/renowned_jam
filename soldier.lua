@@ -38,7 +38,25 @@ local function soldier_brain(self)
 			return
         end
 
-        renowned_jam.make_formation_step(self, prty)
+        local pos=self.object:get_pos()
+        local player = mobkit.get_nearby_player(self)
+
+        if player then
+            local player_name = player:get_player_name()
+            local commander = mobkit.recall(self, "commander") or ""
+
+            --print(commander .. " - " .. player_name)
+            if player and vector.distance(pos,player:get_pos()) < 10 and player_name~=commander then
+                mobkit.hq_hunt(self, 10, player)
+            else
+                if prty > 9 then
+                    mobkit.clear_queue_high(self)
+                end
+                renowned_jam.make_formation_step(self, prty)
+            end
+        else
+            renowned_jam.make_formation_step(self, prty)
+        end
 
 		--local pos=self.object:get_pos()
 

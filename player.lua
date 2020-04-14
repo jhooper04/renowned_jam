@@ -1,19 +1,19 @@
 
-local lobby_players = {}
-local lobby_spawn = {x=0, y=0, z=0}
+--local lobby_players = {}
+--local lobby_spawn = {x=0, y=0, z=0}
 
 local function on_player_new(player)
 
 end
 
 local function on_player_join(player)
-    local player_name = player:get_player_name()
-    lobby_players[player_name] = true
+    --local player_name = player:get_player_name()
+    --lobby_players[player_name] = true
 end
 
 local function on_player_leave(player, timed_out)
-    local player_name = player:get_player_name()
-    lobby_players[player_name] = nil
+    --local player_name = player:get_player_name()
+    --lobby_players[player_name] = nil
 end
 
 local function on_player_die(player, reason)

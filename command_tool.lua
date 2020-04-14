@@ -46,7 +46,7 @@ local function select_soldier(soldier, player)
 
         local selection_obj = minetest.add_entity(pos,"renowned_jam:command_select")
         selection_obj:set_attach(soldier, "Head", {x=0,y=6,z=0}, {x=0,y=0,z=0})
-        ent._owner = player:get_player_name()
+        --ent._owner = player:get_player_name()
         ent._selected = true
         table.insert(selections, selection_obj)
     end
@@ -78,10 +78,14 @@ end
 local function command_tool_on_place(itemstack, player, pointed_thing)
 
     if pointed_thing.type == "node" then
+        local player_name = player:get_player_name()
         local pos = {
             x = pointed_thing.under.x, y = pointed_thing.under.y+0.5, z = pointed_thing.under.z
         }
-        minetest.add_entity(pos,"renowned_jam:soldier")
+        local soldier = minetest.add_entity(pos,"renowned_jam:soldier")
+        local soldier_entity = soldier:get_luaentity()
+
+        mobkit.remember(soldier_entity,"commander", player_name)
     end
 end
 

@@ -3,7 +3,7 @@ local function hq_moveto(self,priority,target_pos)
 	local func = function(theself)
 		if mobkit.is_queue_empty_low(theself) and theself.isonground then
 			local pos = mobkit.get_stand_pos(theself)
-			if vector.distance(pos,target_pos) > 1 then
+			if vector.distance(pos,target_pos) > 0.6 then
 				mobkit.goto_next_waypoint(theself,target_pos)
 			else
 				mobkit.lq_idle(theself,1)
@@ -29,7 +29,10 @@ function renowned_jam.make_formation_to_pos(selections, targetPos)
 
             parent_entity._is_leader = (sel_idx == 1)
             parent_entity._targetPos = targetPos
-            parent_entity._offset = {x=0, y=0, z=sel_idx}
+            parent_entity._offset = {x=sel_idx-(math.floor(#selections*0.5)+2), y=0, z=0}
+            if sel_idx >= math.floor(#selections*0.5)+2 then
+                parent_entity._offset.x = parent_entity._offset.x+1
+            end
             mobkit.clear_queue_high(parent_entity)
         end
     end
@@ -43,8 +46,16 @@ function renowned_jam.make_formation_step(self, priority)
     else
         if self._leading_obj ~= nil then
             mobkit.clear_queue_high(self)
-            --print(dump(self._leading_obj:get_pos()))
-            hq_moveto(self, 9, vector.add(self._leading_obj:get_pos(), self._offset))
+            local pos = self._leading_obj:get_pos()
+            local rot = self._leading_obj:get_rotation()
+            local offset = self._offset
+            local rot_offset = {
+                x=offset.x*math.cos(-rot.y) + offset.z*math.sin(-rot.y),
+                y=offset.y,
+                z=-offset.x*math.sin(-rot.y) + offset.z*math.cos(-rot.y)
+            }
+            --print(dump(rot_offset))
+            hq_moveto(self, 9, vector.add(pos, rot_offset))
         else
             if priority < 9 and self._targetPos ~= nil then
                 hq_moveto(self, 9, self._targetPos)
