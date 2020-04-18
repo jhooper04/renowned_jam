@@ -1,42 +1,14 @@
 
 --local abr = minetest.get_mapgen_setting('active_block_range')
-local node_lava = nil
---local min=math.min
---local max=math.max
 
 --local spawn_rate = 1 - 0.2
 --local spawn_reduction = 0.75
-
-local function get_nearby_enemy(self, commander)	-- returns random player if nearby or nil
-    for _,obj in ipairs(self.nearby_objects) do
-
-        if mobkit.is_alive(obj) then
-            if obj:is_player() and obj:get_player_name() ~= commander then return obj end
-            if not obj:is_player() and mobkit.recall(obj:get_luaentity(), "commander") ~= commander then
-                return obj
-            end
-        end
-	end
-	return
-end
-
-local function lava_dmg(self,dmg)
-	node_lava = node_lava or minetest.registered_nodes[minetest.registered_aliases.mapgen_lava_source]
-	if node_lava then
-		local pos=self.object:get_pos()
-		local box = self.object:get_properties().collisionbox
-		local pos1={x=pos.x+box[1],y=pos.y+box[2],z=pos.z+box[3]}
-		local pos2={x=pos.x+box[4],y=pos.y+box[5],z=pos.z+box[6]}
-		local nodes=mobkit.get_nodes_in_area(pos1,pos2)
-		if nodes[node_lava] then mobkit.hurt(self,dmg) end
-	end
-end
 
 local function soldier_brain(self)
 
 	-- vitals should be checked every step
     if mobkit.timer(self,1) then
-        lava_dmg(self,6)
+        renowned_jam.unit_lava_dmg(self,6)
     end
 
 	mobkit.vitals(self)
@@ -61,76 +33,16 @@ local function soldier_brain(self)
 
         local pos=self.object:get_pos()
         local commander = mobkit.recall(self, "commander") or ""
-        local enemy_soldier = get_nearby_enemy(self, commander)
+        local enemy_soldier = renowned_jam.unit_get_nearby_enemy(self, commander)
 
         if enemy_soldier and vector.distance(pos,enemy_soldier:get_pos()) < 10 then
-            mobkit.hq_hunt(self, 10, enemy_soldier)
+            renowned_jam.unit_hq_hunt(self, 10, enemy_soldier)
         else
             if prty > 9 then
                 mobkit.clear_queue_high(self)
             end
             renowned_jam.make_formation_step(self, prty)
         end
-
-            --     if prty > 9 then
-            --         mobkit.clear_queue_high(self)
-            --     end
-            --     renowned_jam.make_formation_step(self, prty)
-            -- end
-            --print(commander .. " - " .. player_name)
-            -- if player and vector.distance(pos,player:get_pos()) < 10 and player_name~=commander then
-            --     mobkit.hq_hunt(self, 10, player)
-            -- elseif enemy_soldier and vector.distance(pos,enemy_soldier:get_pos()) < 10 then
-            --     mobkit.hq_hunt(self, 10, enemy_soldier)
-            -- else
-            --     if prty > 9 then
-            --         mobkit.clear_queue_high(self)
-            --     end
-            --     renowned_jam.make_formation_step(self, prty)
-            -- end
-        --else
-        --    renowned_jam.make_formation_step(self, prty)
-        --end
-
-		--local pos=self.object:get_pos()
-
-		-- -- hunt
-		-- if prty < 10 then							-- if not busy with anything important
-		-- 	local prey = mobkit.get_closest_entity(self,'new_rpg:npc')	-- look for prey
-		-- 	if prey then
-		-- 		mobkit.hq_hunt(self,10,prey) 									-- and chase it
-		-- 	end
-		-- end
-
-        -- if self._leader then
-        --     if prty < 9 and self._targetPos ~= nil then
-        --         hq_moveto(self, 9, self._targetPos)
-        --     end
-        -- else
-        --     if self._leading_obj ~= nil then
-        --         mobkit.clear_queue_high(self)
-        --         --print(dump(self._leading_obj:get_pos()))
-        --         hq_moveto(self, 9, self._leading_obj:get_pos())
-        --     else
-        --         if prty < 9 and self._targetPos ~= nil then
-        --             hq_moveto(self, 9, self._targetPos)
-        --         end
-        --     end
-        -- end
-
-
-			-- local plyr = mobkit.get_nearby_player(self)
-			-- if plyr and vector.distance(pos,plyr:get_pos()) < 10 then	-- if player close
-            --     --mobkit.hq_warn(self,9,plyr)								-- try to repel them
-            --     --mobkit.animate(self,"mine")
-            --     --mobkit.make_sound(self, "attack")
-            --     mobkit.hq_follow(self, 9, plyr)
-            --     --print(dump(plyr:get_properties()))
-			-- end															-- hq_warn will trigger subsequent bhaviors if needed
-		-- fool around
-		--if mobkit.is_queue_empty_high(self) then
-            --mobkit.hq_roam(self,0)
-		--end
 	end
 end
 
@@ -189,14 +101,6 @@ end
 -- 	end
 -- end
 
-local function soldier_actfunc(self, staticdata, dtime_s)
-    mobkit.actfunc(self, staticdata, dtime_s)
-
-    local props = {}
-    props.textures = self.textures[self.texture_no or 1]
-    self.object:set_properties(props)
-end
-
 minetest.register_entity("renowned_jam:soldier", {
     -- common props
     physical = true,
@@ -218,7 +122,7 @@ minetest.register_entity("renowned_jam:soldier", {
     makes_footstep_sound = true,
 
     on_step = mobkit.stepfunc,
-    on_activate = soldier_actfunc,
+    on_activate = renowned_jam.unit_actfunc,
     get_staticdata = mobkit.statfunc,
 
     -- api props
@@ -230,7 +134,7 @@ minetest.register_entity("renowned_jam:soldier", {
     lung_capacity = 20, 		-- seconds
     max_hp = 20,
     timeout=600,
-    attack={ range=1, damage_groups={fleshy=6}},
+    attack={ range=4, damage_groups={fleshy=6}},
     sounds = {
         attack='renowned_jam_man_fight',
         warn = 'renowned_jam_man_yell',
@@ -263,6 +167,6 @@ minetest.register_entity("renowned_jam:soldier", {
     end,
 
     on_rightclick = function(self, clicker)
-        print(dump(clicker:get_properties()))
+        --print(dump(clicker:get_properties()))
     end,
 })

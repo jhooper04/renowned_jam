@@ -1,21 +1,5 @@
 
 
-
-
-local function hq_moveto(self,priority,target_pos)
-	local func = function(theself)
-		if mobkit.is_queue_empty_low(theself) and theself.isonground then
-			local pos = mobkit.get_stand_pos(theself)
-			if vector.distance(pos,target_pos) > 0.6 then
-				mobkit.goto_next_waypoint(theself,target_pos)
-			else
-				mobkit.lq_idle(theself,1)
-			end
-		end
-	end
-	mobkit.queue_high(self,func,priority)
-end
-
 function renowned_jam.make_formation_to_pos(selections, target_pos)
 
     local formation = {
@@ -50,8 +34,6 @@ function renowned_jam.make_formation_to_pos(selections, target_pos)
     local dir = vector.direction(formation.start_pos, formation.target_pos)
     formation.leader:set_yaw(minetest.dir_to_yaw(dir))
     formation.leader:set_velocity(vector.multiply(dir, 4))
-    --formation.leader:set_rotation({x=0, y=vector.angle(formation.start_pos, formation.target_pos), z=0})
-    --formation.leader:move_to(formation.target_pos, false)
 
     if formation.leader == nil then
         minetest.log("error", "failed to create command_lead obj for selection")
@@ -65,42 +47,17 @@ function renowned_jam.make_formation_to_pos(selections, target_pos)
         unit_entity._target_pos = formation.target_pos
         unit_entity._start_pos = formation.start_pos
         unit_entity._offset = {x=unit_idx-(math.floor(#formation.units*0.5)), y=0, z=0}
-        --if unit_idx >= math.floor(#selections*0.5)+2 then
-        --    unit_entity._offset.x = unit_entity._offset.x+1
-        --end
+
         mobkit.clear_queue_high(unit_entity)
     end
-
-    -- for sel_idx, sel_obj in ipairs(selections) do
-    --     if sel_obj ~= nil and sel_obj:get_attach() ~= nil then
-    --         local soldier = sel_obj:get_attach()
-    --         local soldier_entity = soldier:get_luaentity()
-
-    --         if sel_idx > 1 then
-    --             soldier_entity._leading_obj = leader
-    --         else
-    --             leader = soldier
-    --         end
-
-    --         soldier_entity._is_leader = (sel_idx == 1)
-    --         soldier_entity._targetPos = targetPos
-    --         soldier_entity._offset = {x=sel_idx-(math.floor(#selections*0.5)+2), y=0, z=0}
-    --         if sel_idx >= math.floor(#selections*0.5)+2 then
-    --             soldier_entity._offset.x = soldier_entity._offset.x+1
-    --         end
-    --         mobkit.clear_queue_high(soldier_entity)
-    --     end
-    -- end
 end
 
 function renowned_jam.make_formation_step(self, priority)
-    -- if self._is_leader then
-    --     if priority < 9 and self._target_pos ~= nil then
-    --         hq_moveto(self, 9, self._target_pos)
-    --     end
-    -- else
+
     if self._leading_obj ~= nil and self._leading_obj:get_pos() ~= nil then
+
         mobkit.clear_queue_high(self)
+
         local pos = self._leading_obj:get_pos()
         local rot = self._leading_obj:get_rotation()
         local offset = self._offset
@@ -109,9 +66,8 @@ function renowned_jam.make_formation_step(self, priority)
             y=offset.y,
             z=-offset.x*math.sin(-rot.y) + offset.z*math.cos(-rot.y)
         }
-        hq_moveto(self, 9, vector.add(pos, rot_offset))
+        renowned_jam.unit_hq_moveto(self, 9, vector.add(pos, rot_offset))
     end
-    -- end
 end
 
 minetest.register_entity("renowned_jam:command_lead", {
@@ -130,15 +86,13 @@ minetest.register_entity("renowned_jam:command_lead", {
         self.time_total = 0
     end,
     on_step = function(self, dtime)
-        self.dtime = dtime --math.min(dtime,0.2)
+
+        self.dtime = dtime
         if mobkit.timer(self, 1) then
+
             local pos = self.object:get_pos()
-            --local dir = self.object:get_velocity()
-            --if mobkit.is_there_yet2d(pos, dir, self._target_pos) then
-            print("here")
             if mobkit.isnear3d(pos, self._target_pos, 4) then
-                print("here 2")
-                --self.object:set_velocity({x=0,y=0,z=0})
+
                 self.object:remove()
             end
         end

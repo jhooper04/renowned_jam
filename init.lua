@@ -18,6 +18,7 @@ local modpath = minetest.get_modpath(modname)
 
 dofile(modpath.."/player.lua")
 dofile(modpath.."/match.lua")
+dofile(modpath.."/custom_mobkit.lua")
 dofile(modpath.."/formation.lua")
 dofile(modpath.."/command_formspec.lua")
 dofile(modpath.."/command_tool.lua")
