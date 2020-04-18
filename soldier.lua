@@ -7,6 +7,19 @@ local node_lava = nil
 --local spawn_rate = 1 - 0.2
 --local spawn_reduction = 0.75
 
+local function get_nearby_enemy(self, commander)	-- returns random player if nearby or nil
+    for _,obj in ipairs(self.nearby_objects) do
+
+        if mobkit.is_alive(obj) then
+            if obj:is_player() and obj:get_player_name() ~= commander then return obj end
+            if not obj:is_player() and mobkit.recall(obj:get_luaentity(), "commander") ~= commander then
+                return obj
+            end
+        end
+	end
+	return
+end
+
 local function lava_dmg(self,dmg)
 	node_lava = node_lava or minetest.registered_nodes[minetest.registered_aliases.mapgen_lava_source]
 	if node_lava then
@@ -20,13 +33,21 @@ local function lava_dmg(self,dmg)
 end
 
 local function soldier_brain(self)
+
 	-- vitals should be checked every step
-	if mobkit.timer(self,1) then lava_dmg(self,6) end
+    if mobkit.timer(self,1) then
+        lava_dmg(self,6)
+    end
+
 	mobkit.vitals(self)
 
 	if self.hp <= 0 then
 		mobkit.clear_queue_high(self)									-- cease all activity
-		mobkit.hq_die(self)												-- kick the bucket
+        mobkit.hq_die(self)												-- kick the bucket
+        local commander = mobkit.recall(self, "commander")
+        if commander ~= nil then
+            renowned_jam.deselect_soldier(self.object, commander)
+        end
 		return
 	end
 
@@ -39,24 +60,37 @@ local function soldier_brain(self)
         end
 
         local pos=self.object:get_pos()
-        local player = mobkit.get_nearby_player(self)
+        local commander = mobkit.recall(self, "commander") or ""
+        local enemy_soldier = get_nearby_enemy(self, commander)
 
-        if player then
-            local player_name = player:get_player_name()
-            local commander = mobkit.recall(self, "commander") or ""
-
-            --print(commander .. " - " .. player_name)
-            if player and vector.distance(pos,player:get_pos()) < 10 and player_name~=commander then
-                mobkit.hq_hunt(self, 10, player)
-            else
-                if prty > 9 then
-                    mobkit.clear_queue_high(self)
-                end
-                renowned_jam.make_formation_step(self, prty)
-            end
+        if enemy_soldier and vector.distance(pos,enemy_soldier:get_pos()) < 10 then
+            mobkit.hq_hunt(self, 10, enemy_soldier)
         else
+            if prty > 9 then
+                mobkit.clear_queue_high(self)
+            end
             renowned_jam.make_formation_step(self, prty)
         end
+
+            --     if prty > 9 then
+            --         mobkit.clear_queue_high(self)
+            --     end
+            --     renowned_jam.make_formation_step(self, prty)
+            -- end
+            --print(commander .. " - " .. player_name)
+            -- if player and vector.distance(pos,player:get_pos()) < 10 and player_name~=commander then
+            --     mobkit.hq_hunt(self, 10, player)
+            -- elseif enemy_soldier and vector.distance(pos,enemy_soldier:get_pos()) < 10 then
+            --     mobkit.hq_hunt(self, 10, enemy_soldier)
+            -- else
+            --     if prty > 9 then
+            --         mobkit.clear_queue_high(self)
+            --     end
+            --     renowned_jam.make_formation_step(self, prty)
+            -- end
+        --else
+        --    renowned_jam.make_formation_step(self, prty)
+        --end
 
 		--local pos=self.object:get_pos()
 

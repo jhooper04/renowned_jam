@@ -17,9 +17,9 @@ local modpath = minetest.get_modpath(modname)
 -- end
 
 dofile(modpath.."/player.lua")
-dofile(modpath.."/structure.lua")
-dofile(modpath.."/soldier.lua")
+dofile(modpath.."/match.lua")
 dofile(modpath.."/formation.lua")
 dofile(modpath.."/command_formspec.lua")
 dofile(modpath.."/command_tool.lua")
-dofile(modpath.."/match.lua")
+dofile(modpath.."/structure.lua")
+dofile(modpath.."/soldier.lua")

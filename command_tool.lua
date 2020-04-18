@@ -1,91 +1,134 @@
 local flag_obj = nil
-local selections = {}
+local player_selections = {
+    -- "jSnake" = {}
+    -- "jSnake2" = {}
+}
 
 local function select_soldier(soldier, player)
     local pos = soldier:get_pos()
     local ent = soldier:get_luaentity()
+    local player_name = player:get_player_name()
     local input = player:get_player_control()
 
     if ent._selected then
-        -- local selection_obj = minetest.add_entity(pos,"renowned_jam:command_select")
-        -- selection_obj:set_attach(soldier, "head", {x=0,y=0,z=0}, {x=0,y=0,z=0})
-        -- ent._owner = player:get_player_name()
-        -- ent._selected = true
-        -- table.insert(selections, selection_obj)
-
         if not input.aux1 then
-            for _, sel_obj in ipairs(selections) do
-                local parent = sel_obj:get_attach():get_luaentity()
-                parent._selected = false
+            for _, sel_obj in ipairs(player_selections[player_name]) do
+                local tsoldier = sel_obj:get_attach()
+                if tsoldier then
+                    local tent = tsoldier:get_luaentity()
+                    tent._selected = false
+                end
                 sel_obj:remove()
             end
-            selections = {}
+            player_selections[player_name] = {}
         else
             local toRemove = 1
-            for index, sel_obj in ipairs(selections) do
+            for index, sel_obj in ipairs(player_selections[player_name]) do
                 if sel_obj == soldier then
-                    local parent = sel_obj:get_attach():get_luaentity()
-                    parent._selected = false
+                    local tsoldier = sel_obj:get_attach()
+                    if tsoldier then
+                        local tent = tsoldier:get_luaentity()
+                        tent._selected = false
+                    end
                     sel_obj:remove()
                     toRemove = index
                     break
                 end
             end
-            table.remove(selections, toRemove)
+            table.remove(player_selections[player_name], toRemove)
         end
 
     else
         if not input.aux1 then
-            for _, sel_obj in ipairs(selections) do
-                local parent = sel_obj:get_attach():get_luaentity()
-                parent._selected = false
+            for _, sel_obj in ipairs(player_selections[player_name]) do
+                local tsoldier = sel_obj:get_attach()
+                if tsoldier then
+                    local tent = tsoldier:get_luaentity()
+                    tent._selected = false
+                end
                 sel_obj:remove()
             end
-            selections = {}
+            player_selections[player_name] = {}
         end
 
         local selection_obj = minetest.add_entity(pos,"renowned_jam:command_select")
         selection_obj:set_attach(soldier, "Head", {x=0,y=6,z=0}, {x=0,y=0,z=0})
-        --ent._owner = player:get_player_name()
         ent._selected = true
-        table.insert(selections, selection_obj)
+        table.insert(player_selections[player_name], selection_obj)
     end
 end
 
 local function command_tool_on_use(itemstack, player, pointed_thing)
 
+    local player_name = player:get_player_name()
+    if player_selections[player_name] == nil then
+        player_selections[player_name] = {}
+    end
+
     if pointed_thing.type == "object" then
+
         local obj = pointed_thing.ref
-        --print(dump(pointed_thing.ref:get_entity_name()))
         if obj:get_entity_name() == "renowned_jam:soldier" then
             select_soldier(obj, player)
         end
     elseif pointed_thing.type == "node" then
+
         local pos = {
             x = pointed_thing.under.x, y = pointed_thing.under.y+0.5, z = pointed_thing.under.z
         }
-        --print(dump(pos))
+
         if flag_obj ~= nil then
             flag_obj:remove()
         end
         flag_obj = minetest.add_entity(pos,"renowned_jam:command_flag")
 
-        --
-        renowned_jam.make_formation_to_pos(selections, pos)
+        renowned_jam.make_formation_to_pos(player_selections[player_name], pos)
     end
 end
 
 local function command_tool_on_place(itemstack, player, pointed_thing)
+    local input = player:get_player_control()
+    local player_name = player:get_player_name()
 
-    if pointed_thing.type == "node" then
-        local player_name = player:get_player_name()
-        local pos = {
-            x = pointed_thing.under.x, y = pointed_thing.under.y+0.5, z = pointed_thing.under.z
-        }
-        local soldier = minetest.add_entity(pos,"renowned_jam:soldier")
-        local soldier_entity = soldier:get_luaentity()
+    if player_selections[player_name] == nil then
+        player_selections[player_name] = {}
+    end
 
-        mobkit.remember(soldier_entity,"commander", player_name)
+    if input.aux1 then
+        renowned_jam.show_command_formspec(player_name)
+    else
+        if pointed_thing.type == "node" then
+            local pos = {
+                x = pointed_thing.under.x, y = pointed_thing.under.y+0.5, z = pointed_thing.under.z
+            }
+            local soldier = minetest.add_entity(pos,"renowned_jam:soldier")
+            local soldier_entity = soldier:get_luaentity()
+
+            mobkit.remember(soldier_entity,"commander", player_name)
+        end
+    end
+end
+
+function renowned_jam.deselect_soldier(soldier, player_name)
+
+    if player_selections[player_name] == nil then
+        player_selections[player_name] = {}
+    end
+
+    local toRemove = -1
+    for index, sel_obj in ipairs(player_selections[player_name]) do
+
+        local tsoldier = sel_obj:get_attach()
+        if tsoldier == soldier then
+            local tent = tsoldier:get_luaentity()
+            tent._selected = false
+            sel_obj:remove()
+            toRemove = index
+            break
+        end
+    end
+    if toRemove > 0 then
+        table.remove(player_selections[player_name], toRemove)
     end
 end
 

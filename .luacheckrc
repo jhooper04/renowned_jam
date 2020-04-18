@@ -3,6 +3,7 @@ globals = {
     "renowned_jam",
 }
 read_globals = {
+    "default",
     "mobkit",
     "wieldview",
 	"DIR_DELIM",
