@@ -39,7 +39,7 @@ function renowned_jam.unit_hq_moveto(self, priority, target_pos)
     local func = function(theself)
         if mobkit.is_queue_empty_low(theself) and theself.isonground then
             local pos = mobkit.get_stand_pos(theself)
-            if vector.distance(pos, target_pos) > 0.6 then
+            if vector.distance(pos, target_pos) > 1 then
                 mobkit.goto_next_waypoint(theself, target_pos)
             else
                 mobkit.lq_idle(theself, 1)

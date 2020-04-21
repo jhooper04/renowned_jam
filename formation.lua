@@ -1,11 +1,25 @@
 
+local function round_number(num)
+    if math.modf(num) > 0.5 then
+        return math.ceil(num)
+    end
+    return math.floor(num)
+end
+
+local function round_pos(pos)
+    return {x=round_number(pos.x), y=round_number(pos.y), z=round_number(pos.z)}
+end
+
+local function pos_to_string(pos)
+    return "{ x="..pos.x..", y="..pos.y..", z="..pos.z.." }"
+end
 
 function renowned_jam.make_formation_to_pos(selections, target_pos)
 
     local formation = {
         leader = nil,
         start_pos = {x=0, y=0, z=0},
-        target_pos = target_pos,
+        target_pos = round_pos(target_pos),
         units = {}
     }
     local unit_pos_sum = {x=0, y=0, z=0}
@@ -24,16 +38,20 @@ function renowned_jam.make_formation_to_pos(selections, target_pos)
         end
     end
 
-    formation.start_pos = vector.divide(unit_pos_sum, unit_count)
+    formation.start_pos = round_pos(vector.divide(unit_pos_sum, unit_count))
+
+    local path_data = minetest.find_path(formation.start_pos, formation.target_pos, 24, 1, 4, "A*")
+    if path_data == nil or #path_data < 2 then
+        path_data = {formation.start_pos, formation.target_pos}
+    end
 
     formation.leader = minetest.add_entity(formation.start_pos, "renowned_jam:command_lead")
     local leader_ent = formation.leader:get_luaentity()
     leader_ent._start_pos = formation.start_pos
     leader_ent._target_pos = formation.target_pos
-
-    local dir = vector.direction(formation.start_pos, formation.target_pos)
-    formation.leader:set_yaw(minetest.dir_to_yaw(dir))
-    formation.leader:set_velocity(vector.multiply(dir, 4))
+    leader_ent._units = formation.units
+    leader_ent._path_data = path_data
+    leader_ent._next_idx = 2
 
     if formation.leader == nil then
         minetest.log("error", "failed to create command_lead obj for selection")
@@ -54,20 +72,67 @@ end
 
 function renowned_jam.make_formation_step(self, priority)
 
-    if self._leading_obj ~= nil and self._leading_obj:get_pos() ~= nil then
+    local pos
+    local rot
 
-        mobkit.clear_queue_high(self)
-
-        local pos = self._leading_obj:get_pos()
-        local rot = self._leading_obj:get_rotation()
-        local offset = self._offset
-        local rot_offset = {
-            x=offset.x*math.cos(-rot.y) + offset.z*math.sin(-rot.y),
-            y=offset.y,
-            z=-offset.x*math.sin(-rot.y) + offset.z*math.cos(-rot.y)
-        }
-        renowned_jam.unit_hq_moveto(self, 9, vector.add(pos, rot_offset))
+    if self._leading_obj == nil then
+        return
     end
+
+    pos = self._leading_obj:get_pos()
+    if pos == nil then
+        return
+    end
+
+    rot = self._leading_obj:get_rotation()
+    if rot == nil then
+        return
+    end
+
+    mobkit.clear_queue_high(self)
+
+    local offset = self._offset
+    local rot_offset = {
+        x=offset.x*math.cos(-rot.y) + offset.z*math.sin(-rot.y),
+        y=offset.y,
+        z=-offset.x*math.sin(-rot.y) + offset.z*math.cos(-rot.y)
+    }
+    renowned_jam.unit_hq_moveto(self, 9, vector.add(pos, rot_offset))
+end
+
+local function leader_activate(self, static_data, dtime)
+    self.time_total = 0
+end
+
+local function leader_step(self, dtime)
+    self.dtime = dtime
+    if mobkit.timer(self, 1) then
+
+        local waypoint = self._path_data[self._next_idx]
+
+        if not waypoint then
+            self.object:remove()
+            return
+        end
+
+        local pos = self.object:get_pos()
+
+        if vector.distance(pos, waypoint) < 2 then
+            self._next_idx = self._next_idx+1
+            leader_step(self, dtime)
+            return
+        end
+
+        local diff = vector.subtract(waypoint, pos)
+        local dir = vector.normalize(diff)
+        local step = vector.multiply(dir, 2)
+
+        self.object:set_velocity(step)
+        self.object:set_yaw(minetest.dir_to_yaw(dir))
+        local target = vector.add(pos, vector.multiply(step, dtime))
+        self.object:move_to(target, true)
+    end
+    self.time_total = self.time_total + dtime
 end
 
 minetest.register_entity("renowned_jam:command_lead", {
@@ -82,20 +147,6 @@ minetest.register_entity("renowned_jam:command_lead", {
     pointable = false,
     static_save = false,
     view_range = 24,
-    on_activate = function(self, static_data, dtime)
-        self.time_total = 0
-    end,
-    on_step = function(self, dtime)
-
-        self.dtime = dtime
-        if mobkit.timer(self, 1) then
-
-            local pos = self.object:get_pos()
-            if mobkit.isnear3d(pos, self._target_pos, 4) then
-
-                self.object:remove()
-            end
-        end
-        self.time_total = self.time_total + dtime
-    end
+    on_activate = leader_activate,
+    on_step = leader_step,
 })

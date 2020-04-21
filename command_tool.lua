@@ -71,7 +71,7 @@ local function command_tool_on_use(itemstack, player, pointed_thing)
         if obj:get_entity_name() == "renowned_jam:soldier" then
             select_soldier(obj, player)
         end
-    elseif pointed_thing.type == "node" then
+    elseif pointed_thing.type == "node" and #player_selections[player_name] > 0 then
 
         local pos = {
             x = pointed_thing.under.x, y = pointed_thing.under.y+0.5, z = pointed_thing.under.z
