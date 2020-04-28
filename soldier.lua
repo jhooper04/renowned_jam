@@ -51,9 +51,10 @@ minetest.register_entity("renowned_jam:soldier", {
     mesh = "3d_armor_character.b3d",
     textures = {
         {
-            "character.png",
-            "3d_armor_trans.png^3d_armor_helmet_steel.png^3d_armor_chestplate_steel.png^" ..
-                    "shields_shield_steel.png^3d_armor_leggings_steel.png^3d_armor_boots_steel.png",
+            "character.png^renowned_jam_character_overlay_red.png",
+            "3d_armor_trans.png",
+            --"3d_armor_trans.png^3d_armor_helmet_steel.png^3d_armor_chestplate_steel.png^" ..
+            --        "shields_shield_steel.png^3d_armor_leggings_steel.png^3d_armor_boots_steel.png",
             wieldview:get_item_texture("default:sword_steel")
         },
     },
