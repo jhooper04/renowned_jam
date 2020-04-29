@@ -70,26 +70,27 @@ function renowned_jam.make_formation_to_pos(selections, target_pos)
     end
 end
 
-function renowned_jam.make_formation_step(self, priority)
+--function renowned_jam.get_rotated_offset(
 
+function renowned_jam.get_target_pos(self)
     local pos
     local rot
 
     if self._leading_obj == nil then
-        return
+        return self._target_pos or self.object:get_pos()
     end
 
     pos = self._leading_obj:get_pos()
     if pos == nil then
-        return
+        return self._target_pos or self.object:get_pos()
     end
 
     rot = self._leading_obj:get_rotation()
     if rot == nil then
-        return
+        return self._target_pos or self.object:get_pos()
     end
 
-    mobkit.clear_queue_high(self)
+    --mobkit.clear_queue_high(self)
 
     local offset = self._offset
     local rot_offset = {
@@ -97,7 +98,39 @@ function renowned_jam.make_formation_step(self, priority)
         y=offset.y,
         z=-offset.x*math.sin(-rot.y) + offset.z*math.cos(-rot.y)
     }
-    renowned_jam.unit_hq_moveto(self, 9, vector.add(pos, rot_offset))
+    return vector.add(pos, rot_offset)
+end
+
+function renowned_jam.make_formation_step(self, priority)
+
+    -- local pos
+    -- local rot
+
+    -- if self._leading_obj == nil then
+    --     return
+    -- end
+
+    -- pos = self._leading_obj:get_pos()
+    -- if pos == nil then
+    --     return
+    -- end
+
+    -- rot = self._leading_obj:get_rotation()
+    -- if rot == nil then
+    --     return
+    -- end
+
+    -- --mobkit.clear_queue_high(self)
+
+    -- local offset = self._offset
+    -- local rot_offset = {
+    --     x=offset.x*math.cos(-rot.y) + offset.z*math.sin(-rot.y),
+    --     y=offset.y,
+    --     z=-offset.x*math.sin(-rot.y) + offset.z*math.cos(-rot.y)
+    -- }
+    -- local dest = vector.add(pos, rot_offset)
+
+
 end
 
 local function leader_activate(self, static_data, dtime)
@@ -111,6 +144,11 @@ local function leader_step(self, dtime)
         local waypoint = self._path_data[self._next_idx]
 
         if not waypoint then
+            --local leader_pos = self.object:get_pos()
+            for _,unit in ipairs(self._units) do
+                local ent = unit:get_luaentity()
+                ent._target_pos = renowned_jam.get_target_pos(ent)
+            end
             self.object:remove()
             return
         end

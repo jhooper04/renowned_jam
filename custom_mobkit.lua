@@ -42,7 +42,9 @@ function renowned_jam.unit_hq_moveto(self, priority, target_pos)
             if vector.distance(pos, target_pos) > 1 then
                 mobkit.goto_next_waypoint(theself, target_pos)
             else
-                mobkit.lq_idle(theself, 1)
+                --mobkit.lq_idle(theself, 100)
+                mobkit.animate(theself, "stand")
+                return true
             end
         end
     end
@@ -62,7 +64,7 @@ function renowned_jam.unit_lq_jumpattack(self, height, target)
                 local vel = theself.object:get_velocity()
                 vel.y = -mobkit.gravity * math.sqrt(height * 2 / -mobkit.gravity)
                 theself.object:set_velocity(vel)
-                mobkit.make_sound(theself, "charge")
+                mobkit.make_sound(theself, "walk_mine")
                 phase = 2
             else
                 mobkit.lq_idle(theself, 0.3)

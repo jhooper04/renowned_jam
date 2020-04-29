@@ -26,17 +26,24 @@ local function soldier_brain(self)
 			return
         end
 
-        local pos=self.object:get_pos()
-        local commander = mobkit.recall(self, "commander") or ""
-        local enemy_soldier = renowned_jam.unit_get_nearby_enemy(self, commander)
+        if prty < 15 then
+            local dest = renowned_jam.get_target_pos(self)
 
-        if enemy_soldier and vector.distance(pos,enemy_soldier:get_pos()) < 10 then
-            renowned_jam.unit_hq_hunt(self, 10, enemy_soldier)
-        else
-            if prty > 9 then
-                mobkit.clear_queue_high(self)
+            if vector.distance(self.object:get_pos(), dest) > 1 then
+                print(dump(self))
+                renowned_jam.unit_hq_moveto(self, 15, dest)
             end
-            renowned_jam.make_formation_step(self, prty)
+        end
+
+        if prty < 10 then
+
+            local pos = renowned_jam.get_target_pos(self) --self.object:get_pos()
+            local commander = mobkit.recall(self, "commander") or ""
+            local enemy_soldier = renowned_jam.unit_get_nearby_enemy(self, commander)
+
+            if enemy_soldier and vector.distance(pos,enemy_soldier:get_pos()) < 10 then
+                renowned_jam.unit_hq_hunt(self, 10, enemy_soldier)
+            end
         end
 	end
 end
