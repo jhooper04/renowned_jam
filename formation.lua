@@ -147,7 +147,9 @@ local function leader_step(self, dtime)
             --local leader_pos = self.object:get_pos()
             for _,unit in ipairs(self._units) do
                 local ent = unit:get_luaentity()
-                ent._target_pos = renowned_jam.get_target_pos(ent)
+                if ent then
+                    ent._target_pos = renowned_jam.get_target_pos(ent)
+                end
             end
             self.object:remove()
             return
